@@ -144,13 +144,13 @@ def solutionToPandas(model):
     return df_varTime, df_varDelay
 
 def plotSolution(df_jobs, df_varTime):
-    # plot result
+    # plot results
     df_varTime = df_varTime.merge(df_jobs, how='left', left_on='cur_job', right_on='job')
     df_varTime['end_time'] = df_varTime['val'] + df_varTime['process_time']
     df_varTime = df_varTime.sort_values(by='end_time', ascending=False)
     df_varTime.reset_index(drop=True, inplace=True)
     
-    fig, ax = plt.subplots(figsize=(6, 2))
+    fig, ax = plt.subplots(figsize=(8, 4))
     for idx, row in df_varTime.iterrows():
         ax.barh(0, row['process_time'], left=row['val'], align='edge')
         ax.barh(0, row['setup_time'], left=row['val']-row['setup_time'],
@@ -158,12 +158,9 @@ def plotSolution(df_jobs, df_varTime):
         ax.text(row['val']+row['process_time']/2.5,0.4, row['cur_job'],
             color = 'black', ha = 'left', va = 'center', rotation=90)
         
-        
-    # for idx, row in :
-    #     ax.patches[idx].text(job['cur_job'],0.4, job, color = 'black', ha = 'left', va = 'center', rotation=90)
     ax.set_title('job scheduling')
     ax.axis('off')
-    fig.show()
+
     return
 
 if __name__ == '__main__':
@@ -188,4 +185,6 @@ if __name__ == '__main__':
     plotSolution(df_jobs, df_varTime)
     print('total make span: ', model.varMakeSpan.value)
     print('total delay: ', df_varDelay['val'].sum())
+
+    plt.show()
     pass

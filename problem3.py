@@ -5,13 +5,34 @@
 import pandas as pd
 import copy
 import random
-
+from matplotlib import pyplot as plt
 
 # car lengths
 df_cars = pd.DataFrame(
     data=[[1,4],[2,4.5],[3,5],[4,4.1],[5,2.4],[6,5.2],[7,3.7],
         [8,3.5],[9,3.2],[10,4.5],[11,2.3],[12,3.3],[13,3.8],[14,4.6],[15,3]],
         columns=['car','length'])
+
+
+def plotSolution(df_bestSol):
+    df_sideA = copy.copy(df_bestSol[df_bestSol['side']=='A'])
+    df_sideA['offset'] = df_sideA['length'].shift(1).fillna(0).cumsum()
+    df_sideA.reset_index(drop=True, inplace=True)
+
+    df_sideB = copy.copy(df_bestSol[df_bestSol['side']=='B'])
+    df_sideB['offset'] = df_sideB['length'].shift(1).fillna(0).cumsum()
+    df_sideB.reset_index(drop=True, inplace=True)
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    for idx, row in df_sideA.iterrows():
+        ax.barh(0, row['length'], left=row['offset'], align='edge')
+
+    for idx, row in df_sideB.iterrows():
+        ax.barh(1, row['length'], left=row['offset'], align='edge')
+    
+    ax.set_title('parking sequence')
+    ax.axis('off')
+    return
 
 
 def calculateCost(df):
@@ -116,6 +137,8 @@ def loopGRASP(df, loops, maxIter, alpha, sideMax=None,):
 
     # print(df_bestSol)
         print(calculateCost(df_bestSol))
+
+    plotSolution(df_bestSol)
     return df_bestSol
 
 
@@ -128,3 +151,6 @@ if __name__ == '__main__':
 
     val = calculateCost(limSideResult)
     print('best car splits with 15 constraint: total = {:.2f}, side A = {:.2f}, side B = {:.2f}'.format(val[0],val[1],val[2]))
+    
+    plt.show()
+    pass
