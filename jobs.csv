@@ -1,0 +1,11 @@
+﻿job;process_time;setup_time;release_time;deadline
+job_1;10;2;0;15
+job_2;5;3;0;20
+job_3;15;1;0;30
+job_4;18;4;10;40
+job_5;4;2;60;90
+job_6;6;3;60;90
+job_7;9;2;60;80
+job_8;20;2;30;60
+job_9;21;4;30;70
+job_10;8;2;40;70
