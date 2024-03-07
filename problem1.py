@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     opt = pyo.SolverFactory('glpk')
     result = opt.solve(model, tee=True)
-    result.write()
+    # result.write()
     model.solutions.load_from(result)
 
     # compile output

@@ -160,3 +160,7 @@ cython_debug/
 #.idea/
 case.pdf
 problem1_output.xlsx
+data.xlsx
+~$data.xlsx
+~$problem2_output.xlsx
+problem2_output.xlsx
