@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 
 class Containers():
     def __init__(self, df_containers):
+        # create dictionaries for easy index access
         self.dict_c = {}
         self.dict_co = {}
         self.dict_cop = {}
@@ -33,7 +34,6 @@ def buildVars(model, containers):
     
     # define variables
     model.varPipes = pyo.Var(model.set_cop, domain=pyo.Binary)
-    model.varOrder = pyo.Var(model.set_co, domain=pyo.Binary)
     model.varContainers = pyo.Var(model.set_c, domain=pyo.Binary)
     return
 
@@ -41,7 +41,7 @@ def buildVars(model, containers):
 def buildConstraints(model, containers):
     # function to create model constraints
 
-    # containers
+    # containers to product relationship
     def constrContainer(model, c):
         return sum(
             model.varPipes[c,o,p] for c1,o in containers.dict_c[c] for c2,o,p in containers.dict_co[c,o]
@@ -54,7 +54,7 @@ def buildConstraints(model, containers):
             ) >= model.varContainers[c]
     model.constrContainer2 = pyo.Constraint(model.set_c, rule=constrContainer2)
 
-    # container order
+    # container order limit
     def constrOrder(model, c, o):
         return sum(
             model.varPipes[c,o,p] for c1,o,p in containers.dict_co[c,o]
@@ -84,7 +84,26 @@ def buildConstraints(model, containers):
 
     return
 
-def solutionToPandas(model,containers):
+
+def removeSolution(model,containers):
+    # add a new constraint to remove the original possibility
+    totalPipes = 0
+    for c,o,p in model.set_cop:
+        if model.varPipes[c,o,p].value is not None and model.varPipes[c,o,p].value > 0.5:
+            totalPipes += model.varPipes[c,o,p].value
+
+    def constrOriginal(model):
+        return sum(
+            model.varPipes[c,o,p] for c,o,p in model.set_cop
+            if model.varPipes[c,o,p].value > 0.5
+            ) <= totalPipes - 0.5
+    model.constrOriginal = pyo.Constraint(rule=constrOriginal)
+
+    return
+
+def solutionToPandas(model,containers,file):
+    # create result dataframes and save in xlsx file
+    # decision variables dataframe
     df_varPipes = pd.DataFrame()
 
     for v in model.varPipes:
@@ -97,7 +116,7 @@ def solutionToPandas(model,containers):
                     columns = ['Container','Sales Order','Steel Pipe','val','weight','volume'])
             ])
 
-    df_varPipes.to_excel('problem2_output.xlsx', index=False)
+    df_varPipes.to_excel(file, index=False)
 
     return df_varPipes
 
@@ -107,17 +126,23 @@ if __name__ == '__main__':
     containers = Containers(df_containers)
 
     model = pyo.ConcreteModel()
+    opt = pyo.SolverFactory('glpk')
 
     buildVars(model, containers)
     buildConstraints(model, containers)
-    # buildObjective(model, containers)
 
-    opt = pyo.SolverFactory('glpk')
+    # solve initial problem
     result = opt.solve(model, tee=True)
-    # result.write()
     model.solutions.load_from(result)
+    solutionToPandas(model,containers,'problem2_output_a.xlsx')
 
-    df_varPipes = solutionToPandas(model,containers)
+    # check if there is another solution
+    removeSolution(model,containers)
+    
+    result = opt.solve(model, tee=True)
+    model.solutions.load_from(result)
+    solutionToPandas(model,containers,'problem2_output_b.xlsx')
+
     model.display()
 
     pass
